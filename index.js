@@ -62,7 +62,7 @@ app.post('/admin',function(req,res,next){
 	}
 	else {
 		sess.isAuth = false;
-		res.redirect('/admin');
+		res.render('admin',{ })	
 	}	 	
 })
 app.get('/logout', (req,res) => {
