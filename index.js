@@ -15,9 +15,10 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(session({ secret: 'keyboard cat', cookie: { maxAge: 60000}, resave : false, saveUninitialized:false}))
 
+var sess;
 
 app.use(function(req, res, next) {
-   var sess = req.session;
+   sess = req.session;
    if (sess.views) {
        sess.views++
    } 
@@ -27,43 +28,53 @@ app.use(function(req, res, next) {
    next();
    console.log(sess.views)
 })
-app.get('/login', function(req, res){	
-   var sess = req.session 
-   sess.isAuth = false;
-   sess.views = 1
-   res.render('login',{})
-})
 
-app.get('/', function(req, res){
-	var sess = req.session
-	console.log(sess.isAuth)
-	if(sess.isAuth) {
-		res.redirect('/welcome')
+app.get('/admin', function(req, res){
+    sess = req.session
+	if(sess.email) {
+		sess.isAuth = true;
+		res.cookie('foo','bar')
+		res.render('welcome',{email: sess.email})
+		console.log(sess.isAuth)
 	} else {
-		res.render('form',{})	
+		res.render('admin',{ })	
 	}
   
 });
+app.get('/', function(req, res){
+	sess = req.session
+	if(sess.isAuth){
+		res.redirect('/admin');
+	}
+	else{
+  	    res.render('form',{ })
+	}
+});
 
-app.get('/welcome', function(req, res, next) {
-	var sess = req.session;
-
-})
-
-app.post('/',function(req,res,next){
-	var sess = req.session
-	if(req.body.email === '' || req.body.password !== '240311'){
-		res.redirect('/login');
-	}	 	
-	else {
+app.post('/admin',function(req,res,next){
+    sess = req.session
+    sess.email = req.body.email
+    sess.password = req.body.password
+	if(req.body.email !== '' && req.body.password === '240311') {
 		sess.isAuth = true;
 		res.cookie('foo','bar')
-		res.render('welcome',{
-		email: req.body.email,
-		password: req.body.password
-	    }) 
+		res.render('welcome',{email: sess.email})
 	}
+	else {
+		sess.isAuth = false;
+		res.redirect('/admin');
+	}	 	
 })
+app.get('/logout', (req,res) => {
+   req.session.destroy((err) => {
+       if(err) {
+           console.log(err);
+       } else {
+           res.redirect('/');
+       }
+   });
+});
+
 
 app.listen(8000)
 console.log('Server is ready!');
